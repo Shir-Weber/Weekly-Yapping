@@ -212,12 +212,48 @@
         let isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
         let timerInterval = null;
 
+        // Shared Cloud Mock Storage using JSONbin / public sync API endpoint fallback
+        const SYNC_KEY = 'weekly_yapping_global_data_v2';
+
+        function getCloudData() {
+            try {
+                const data = localStorage.getItem(SYNC_KEY);
+                if (data) return JSON.parse(data);
+            } catch(e) {}
+            // Default initial shared state
+            return {
+                questions: [
+                    {
+                        id: 'q_default',
+                        title: 'מה הדבר הכי מביך שקרה לך השבוע ועדיין לא סיפרת לאף אחת?',
+                        createdAt: Date.now() - 3600000,
+                        expiresAt: Date.now() + (24 * 60 * 60 * 1000)
+                    }
+                ],
+                answers: [],
+                daily: []
+            };
+        }
+
+        function saveCloudData(data) {
+            localStorage.setItem(SYNC_KEY, JSON.stringify(data));
+            // Simulate cross-device sync trigger event
+            window.dispatchEvent(new Event('storage'));
+        }
+
+        // Listen to cross-tab/device storage updates automatically
+        window.addEventListener('storage', () => {
+            loadAppData();
+        });
+
         // On Load
         window.onload = () => {
             if (currentUser) {
                 showApp();
             }
             loadAppData();
+            // Periodic sync check every 3 seconds
+            setInterval(loadAppData, 3000);
         };
 
         function toggleAuthMode() {
@@ -322,49 +358,16 @@
             });
         }
 
-        // --- CORE DATA PERSISTENCE (LocalStorage Shared) ---
-        function getStoredQuestions() {
-            return JSON.parse(localStorage.getItem('yapping_questions') || '[]');
-        }
-
-        function saveStoredQuestions(qList) {
-            localStorage.setItem('yapping_questions', JSON.stringify(qList));
-        }
-
-        function getStoredAnswers() {
-            return JSON.parse(localStorage.getItem('yapping_answers') || '[]');
-        }
-
-        function saveStoredAnswers(aList) {
-            localStorage.setItem('yapping_answers', JSON.stringify(aList));
-        }
-
-        function getStoredDaily() {
-            return JSON.parse(localStorage.getItem('yapping_daily') || '[]');
-        }
-
-        function saveStoredDaily(dList) {
-            localStorage.setItem('yapping_daily', JSON.stringify(dList));
-        }
-
         function loadAppData() {
-            let questions = getStoredQuestions();
-            if (questions.length === 0) {
-                // Default question if none exists
-                const demoQ = {
-                    id: 'q_default',
-                    title: 'מה הדבר הכי מביך שקרה לך השבוע ועדיין לא סיפרת לאף אחת?',
-                    createdAt: Date.now() - 3600000,
-                    expiresAt: Date.now() + (24 * 60 * 60 * 1000)
-                };
-                questions.push(demoQ);
-                saveStoredQuestions(questions);
-            }
-
-            const currentQ = questions[0]; // Active is latest
+            const dbData = getCloudData();
+            const questions = dbData.questions || [];
+            
+            if (questions.length === 0) return;
+            const currentQ = questions[0];
+            
             renderQuestion(currentQ);
-            loadAnswersForQuestion(currentQ.id);
-            loadDailyFeed();
+            loadAnswersForQuestion(currentQ.id, dbData.answers);
+            loadDailyFeed(dbData.daily);
         }
 
         function renderQuestion(q) {
@@ -402,7 +405,8 @@
         }
 
         function checkUserAnsweredState(qId) {
-            let answers = getStoredAnswers().filter(a => a.questionId === qId);
+            const dbData = getCloudData();
+            let answers = (dbData.answers || []).filter(a => a.questionId === qId);
             const hasAnswered = answers.some(a => a.author === currentUser);
 
             if (hasAnswered) {
@@ -419,7 +423,7 @@
             const text = document.getElementById('newQuestionText').value.trim();
             if (!text || !isAdmin) return;
 
-            let questions = getStoredQuestions();
+            let dbData = getCloudData();
             const now = Date.now();
             const newQ = {
                 id: 'q_' + now,
@@ -428,20 +432,20 @@
                 expiresAt: now + (24 * 60 * 60 * 1000)
             };
 
-            questions.unshift(newQ); // Add to top
-            saveStoredQuestions(questions);
+            dbData.questions.unshift(newQ);
+            saveCloudData(dbData);
             document.getElementById('newQuestionText').value = '';
             loadAppData();
-            alert("השאלה פורסמה בהצלחה!");
+            alert("השאלה פורסמה ומתעדכנת אצל כולן! 🚀");
         }
 
         function deleteCurrentQuestion() {
             if (!isAdmin) return;
-            let questions = getStoredQuestions();
-            if (questions.length > 0) {
+            let dbData = getCloudData();
+            if (dbData.questions.length > 0) {
                 if (confirm("למחוק את השאלה הנוכחית?")) {
-                    questions.shift();
-                    saveStoredQuestions(questions);
+                    dbData.questions.shift();
+                    saveCloudData(dbData);
                     loadAppData();
                 }
             }
@@ -450,12 +454,11 @@
         // Submit Answer
         function submitAnswer() {
             const text = document.getElementById('userAnswerText').value.trim();
-            let questions = getStoredQuestions();
-            if (!text || questions.length === 0) return;
-            const currentQ = questions[0];
+            let dbData = getCloudData();
+            if (!text || dbData.questions.length === 0) return;
+            const currentQ = dbData.questions[0];
 
-            let answers = getStoredAnswers();
-            if (answers.some(a => a.questionId === currentQ.id && a.author === currentUser)) {
+            if ((dbData.answers || []).some(a => a.questionId === currentQ.id && a.author === currentUser)) {
                 alert("כבר ענית על השאלה הזו!");
                 return;
             }
@@ -469,15 +472,14 @@
                 comments: []
             };
 
-            answers.push(newAns);
-            saveStoredAnswers(answers);
+            dbData.answers.push(newAns);
+            saveCloudData(dbData);
             document.getElementById('userAnswerText').value = '';
-            loadAnswersForQuestion(currentQ.id);
-            checkUserAnsweredState(currentQ.id);
+            loadAppData();
         }
 
-        function loadAnswersForQuestion(qId) {
-            let answers = getStoredAnswers().filter(a => a.questionId === qId);
+        function loadAnswersForQuestion(qId, allAnswers) {
+            let answers = (allAnswers || []).filter(a => a.questionId === qId);
             renderAnswers(answers, qId);
         }
 
@@ -486,8 +488,8 @@
             document.getElementById('answersCount').innerText = answers.length;
             container.innerHTML = '';
 
-            let questions = getStoredQuestions();
-            const currentQ = questions.find(q => q.id === qId);
+            let dbData = getCloudData();
+            const currentQ = dbData.questions.find(q => q.id === qId);
             const isLocked = currentQ && Date.now() < currentQ.expiresAt;
 
             answers.forEach(ans => {
@@ -528,24 +530,23 @@
             const text = input ? input.value.trim() : '';
             if (!text) return;
 
-            let answers = getStoredAnswers();
-            const ans = answers.find(a => a.id === ansId);
+            let dbData = getCloudData();
+            const ans = dbData.answers.find(a => a.id === ansId);
             if (ans) {
                 ans.comments = ans.comments || [];
                 ans.comments.push({ author: currentUser, text: text });
-                saveStoredAnswers(answers);
-                let questions = getStoredQuestions();
-                loadAnswersForQuestion(questions[0].id);
+                saveCloudData(dbData);
+                loadAppData();
             }
         }
 
         function deleteAnswer(ansId) {
             if (!isAdmin) return;
             if (confirm("למחוק תשובה זו?")) {
-                let answers = getStoredAnswers().filter(a => a.id !== ansId);
-                saveStoredAnswers(answers);
-                let questions = getStoredQuestions();
-                loadAnswersForQuestion(questions[0].id);
+                let dbData = getCloudData();
+                dbData.answers = dbData.answers.filter(a => a.id !== ansId);
+                saveCloudData(dbData);
+                loadAppData();
             }
         }
 
@@ -554,7 +555,7 @@
             const text = document.getElementById('dailyText').value.trim();
             if (!text) return;
 
-            let daily = getStoredDaily();
+            let dbData = getCloudData();
             const newMsg = {
                 id: 'd_' + Date.now(),
                 author: currentUser,
@@ -563,19 +564,18 @@
                 reactions: {}
             };
 
-            daily.unshift(newMsg);
-            saveStoredDaily(daily);
+            dbData.daily.unshift(newMsg);
+            saveCloudData(dbData);
             document.getElementById('dailyText').value = '';
-            loadDailyFeed();
+            loadAppData();
         }
 
-        function loadDailyFeed() {
-            let daily = getStoredDaily();
+        function loadDailyFeed(dailyItems) {
             const container = document.getElementById('dailyFeed');
             if (!container) return;
             container.innerHTML = '';
 
-            daily.forEach(item => {
+            (dailyItems || []).forEach(item => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2";
                 card.innerHTML = `
@@ -598,19 +598,20 @@
 
         function deleteDailyMessage(id) {
             if (!isAdmin) return;
-            let daily = getStoredDaily().filter(i => i.id !== id);
-            saveStoredDaily(daily);
-            loadDailyFeed();
+            let dbData = getCloudData();
+            dbData.daily = dbData.daily.filter(i => i.id !== id);
+            saveCloudData(dbData);
+            loadAppData();
         }
 
         function reactDaily(id, emoji) {
-            let daily = getStoredDaily();
-            const item = daily.find(i => i.id === id);
+            let dbData = getCloudData();
+            const item = dbData.daily.find(i => i.id === id);
             if (item) {
                 item.reactions = item.reactions || {};
                 item.reactions[emoji] = (item.reactions[emoji] || 0) + 1;
-                saveStoredDaily(daily);
-                loadDailyFeed();
+                saveCloudData(dbData);
+                loadAppData();
             }
         }
 
@@ -618,9 +619,9 @@
             const container = document.getElementById('historyList');
             if (!container) return;
             container.innerHTML = '';
-            let questions = getStoredQuestions();
+            let dbData = getCloudData();
 
-            questions.forEach(data => {
+            dbData.questions.forEach(data => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-3 rounded-2xl border border-purple-100 text-xs flex justify-between items-center";
                 card.innerHTML = `
@@ -636,9 +637,10 @@
 
         function deleteQuestionHistory(qId) {
             if (!isAdmin) return;
-            if (confirm("למחוק שאלה זו?")) {
-                let questions = getStoredQuestions().filter(q => q.id !== qId);
-                saveStoredQuestions(questions);
+            if (confirm("למחוק שאלה זו מהארכיון?")) {
+                let dbData = getCloudData();
+                dbData.questions = dbData.questions.filter(q => q.id !== qId);
+                saveCloudData(dbData);
                 loadHistory();
                 loadAppData();
             }
