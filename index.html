@@ -19,10 +19,6 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
     <style>
         body {
             font-family: 'Rubik', sans-serif;
@@ -62,7 +58,7 @@
     <!-- Main Container -->
     <main class="max-w-md mx-auto w-full p-4 flex-1">
 
-        <!-- AUTH SCREEN (Login / Register) -->
+        <!-- AUTH SCREEN -->
         <div id="authScreen" class="bg-white p-6 rounded-3xl shadow-xl border border-purple-100 mt-6 space-y-4 text-right">
             <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
                 <i class="fa-solid fa-user-lock"></i>
@@ -72,7 +68,7 @@
                 <p id="authSubtitle" class="text-gray-500 text-sm mt-1">הקלידי את פרטי החשבון שלך</p>
             </div>
             
-            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">שם משתמש:</label>
                     <input type="text" id="authUsername" placeholder="שם משתמש" required 
@@ -97,13 +93,13 @@
             </div>
         </div>
 
-        <!-- MAIN APP CONTENT (Hidden by default) -->
+        <!-- MAIN APP CONTENT -->
         <div id="appContent" class="hidden space-y-6">
 
-            <!-- TAB 1: WEEKLY YAPP (Current Question) -->
+            <!-- TAB 1: WEEKLY YAPP -->
             <section id="tab-yapp" class="space-y-4">
                 
-                <!-- Admin Question Generator -->
+                <!-- Admin Panel -->
                 <div id="adminPanel" class="hidden bg-purple-900 text-white p-4 rounded-2xl shadow-md border border-purple-700">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold bg-yellow-400 text-purple-950 px-2 py-0.5 rounded-full">Admin Console</span>
@@ -134,15 +130,14 @@
 
                     <h3 id="questionTitle" class="text-lg font-bold text-gray-800 leading-snug">טוען שאלה...</h3>
 
-                    <!-- Status Info -->
                     <div id="questionStatusBox" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-center gap-2">
                         <i class="fa-solid fa-lock text-base text-amber-600"></i>
-                        <span>התשובות נסתרות! בלייב ייחשפו בתום 24 שעות מתחילת השאלה.</span>
+                        <span>התשובות נסתרות! ייחשפו בתום 24 שעות מתחילת השאלה.</span>
                     </div>
 
                     <!-- Answer Form -->
                     <div id="answerFormContainer" class="pt-2 border-t border-purple-50">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">התשובה שלך (עד 300 תווים, תשובה אחת בלבד):</label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">התשובה שלך (עד 300 תווים, פעם אחת בלבד):</label>
                         <textarea id="userAnswerText" maxlength="300" placeholder="תרשמי פה את התשובה שלך..." 
                                   class="w-full p-3 border border-purple-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" rows="3"></textarea>
                         <div class="flex justify-between items-center mt-2">
@@ -153,14 +148,13 @@
                         </div>
                     </div>
 
-                    <!-- Lock Notice if Answered -->
                     <div id="alreadyAnsweredNotice" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-center gap-2">
                         <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                        <span>ענית על השאלה! ניתן לענות רק פעם אחת. התשובה נשמרה ותיחשף לכולן בתום הזמן.</span>
+                        <span>ענית על השאלה! התשובה נשמרה ותיחשף לכולן בתום הזמן.</span>
                     </div>
                 </div>
 
-                <!-- Answers List Container -->
+                <!-- Answers List -->
                 <div class="space-y-3">
                     <div class="flex justify-between items-center px-1">
                         <h4 class="font-bold text-gray-700 text-sm">תשובות הבנות (<span id="answersCount">0</span>)</h4>
@@ -173,10 +167,9 @@
             <section id="tab-wall" class="hidden space-y-4">
                 <div class="bg-gradient-to-r from-pink-500 to-rose-500 text-white p-4 rounded-3xl shadow-sm">
                     <h3 class="font-bold text-base mb-1">💬 שיחה יומית (Daily Message)</h3>
-                    <p class="text-xs opacity-90">כל אחת יכולה לשתף מסר אחד בלבד ביום. הגיבו לחברות!</p>
+                    <p class="text-xs opacity-90">כל אחת יכולה לשתף מסר אחד ביום. הגיבו לחברות!</p>
                 </div>
 
-                <!-- Submit Daily Message -->
                 <div id="dailyMessageForm" class="bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2">
                     <textarea id="dailyText" placeholder="מה בא לך לשתף היום?" class="w-full p-3 border border-pink-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" rows="2"></textarea>
                     <button onclick="submitDailyMessage()" class="w-full bg-pink-500 text-white font-bold py-2 rounded-xl text-sm shadow hover:bg-pink-600">
@@ -214,32 +207,17 @@
 
     <!-- Application Script -->
     <script>
-        // FIREBASE INITIALIZATION
-        const firebaseConfig = {
-            apiKey: "AIzaSyDemoKeyOnlyReplaceWithYoursIfNeeded",
-            authDomain: "weekly-yapping.firebaseapp.com",
-            projectId: "weekly-yapping-app",
-            storageBucket: "weekly-yapping-app.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:demo"
-        };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
-
         let isRegisterMode = false;
-        let currentQuestion = null;
+        let currentUser = localStorage.getItem('yapping_user') || '';
+        let isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
         let timerInterval = null;
 
-        // Check Session on Load
+        // On Load
         window.onload = () => {
-            const savedUser = localStorage.getItem('yapping_user');
-            if (savedUser) {
-                showApp(savedUser, localStorage.getItem('yapping_is_admin') === 'true');
+            if (currentUser) {
+                showApp();
             }
-            setupListeners();
+            loadAppData();
         };
 
         function toggleAuthMode() {
@@ -257,7 +235,6 @@
 
             if (!username || !password) return;
 
-            // Admin Login
             if (username.toLowerCase() === 'admin') {
                 if (password === 'Aa123456') {
                     loginSuccess('Admin', true);
@@ -287,9 +264,11 @@
         }
 
         function loginSuccess(username, adminStatus) {
-            localStorage.setItem('yapping_user', username);
-            localStorage.setItem('yapping_is_admin', adminStatus);
-            showApp(username, adminStatus);
+            currentUser = username;
+            isAdmin = adminStatus;
+            localStorage.setItem('yapping_user', currentUser);
+            localStorage.setItem('yapping_is_admin', isAdmin);
+            showApp();
         }
 
         function logout() {
@@ -298,7 +277,7 @@
             location.reload();
         }
 
-        function showApp(username, adminStatus) {
+        function showApp() {
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('appContent').classList.remove('hidden');
             document.getElementById('bottomNav').classList.remove('hidden');
@@ -306,12 +285,13 @@
             const badge = document.getElementById('userBadge');
             badge.classList.remove('hidden');
             badge.classList.add('flex');
-            document.getElementById('userNameDisplay').innerText = username;
+            document.getElementById('userNameDisplay').innerText = currentUser;
 
-            if (adminStatus) {
+            if (isAdmin) {
                 document.getElementById('adminPanel').classList.remove('hidden');
                 document.getElementById('adminDeleteQuestionBtn').classList.remove('hidden');
             }
+            loadAppData();
         }
 
         function switchTab(tab) {
@@ -342,23 +322,61 @@
             });
         }
 
-        function setupListeners() {
-            db.collection('questions').orderBy('createdAt', 'desc').limit(1).onSnapshot(snapshot => {
-                if (!snapshot.empty) {
-                    const doc = snapshot.docs[0];
-                    currentQuestion = { id: doc.id, ...doc.data() };
-                    renderQuestion();
-                    loadAnswers(currentQuestion.id);
-                } else {
-                    renderQuestionDemo();
-                }
-            }, () => renderQuestionDemo());
+        // --- CORE DATA PERSISTENCE (LocalStorage Shared) ---
+        function getStoredQuestions() {
+            return JSON.parse(localStorage.getItem('yapping_questions') || '[]');
+        }
 
-            db.collection('dailyFeed').orderBy('createdAt', 'desc').limit(20).onSnapshot(snapshot => {
-                let items = [];
-                snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-                renderDailyFeed(items);
-            }, () => renderDailyFeedDemo());
+        function saveStoredQuestions(qList) {
+            localStorage.setItem('yapping_questions', JSON.stringify(qList));
+        }
+
+        function getStoredAnswers() {
+            return JSON.parse(localStorage.getItem('yapping_answers') || '[]');
+        }
+
+        function saveStoredAnswers(aList) {
+            localStorage.setItem('yapping_answers', JSON.stringify(aList));
+        }
+
+        function getStoredDaily() {
+            return JSON.parse(localStorage.getItem('yapping_daily') || '[]');
+        }
+
+        function saveStoredDaily(dList) {
+            localStorage.setItem('yapping_daily', JSON.stringify(dList));
+        }
+
+        function loadAppData() {
+            let questions = getStoredQuestions();
+            if (questions.length === 0) {
+                // Default question if none exists
+                const demoQ = {
+                    id: 'q_default',
+                    title: 'מה הדבר הכי מביך שקרה לך השבוע ועדיין לא סיפרת לאף אחת?',
+                    createdAt: Date.now() - 3600000,
+                    expiresAt: Date.now() + (24 * 60 * 60 * 1000)
+                };
+                questions.push(demoQ);
+                saveStoredQuestions(questions);
+            }
+
+            const currentQ = questions[0]; // Active is latest
+            renderQuestion(currentQ);
+            loadAnswersForQuestion(currentQ.id);
+            loadDailyFeed();
+        }
+
+        function renderQuestion(q) {
+            if (!q) return;
+            document.getElementById('questionTitle').innerText = q.title;
+            if (Date.now() >= q.expiresAt) {
+                document.getElementById('timerText').innerText = "תשובות גלויות";
+                document.getElementById('questionStatusBox').classList.add('hidden');
+            } else {
+                startTimer(q.expiresAt);
+            }
+            checkUserAnsweredState(q.id);
         }
 
         function startTimer(endTime) {
@@ -371,7 +389,7 @@
                     document.getElementById('timerText').innerText = "תשובות נחשפו!";
                     const statusBox = document.getElementById('questionStatusBox');
                     if (statusBox) statusBox.classList.add('hidden');
-                    renderAnswers();
+                    loadAppData();
                     return false;
                 }
                 const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -383,37 +401,11 @@
             if (update()) timerInterval = setInterval(update, 1000);
         }
 
-        function renderQuestionDemo() {
-            const demoCreatedAt = Date.now() - (2 * 60 * 60 * 1000);
-            currentQuestion = {
-                id: 'demo123',
-                title: 'מה הדבר הכי מביך שקרה לך השבוע ועדיין לא סיפרת לאף אחת?',
-                createdAt: demoCreatedAt,
-                expiresAt: demoCreatedAt + (24 * 60 * 60 * 1000)
-            };
-            renderQuestion();
-            loadAnswersDemo();
-        }
+        function checkUserAnsweredState(qId) {
+            let answers = getStoredAnswers().filter(a => a.questionId === qId);
+            const hasAnswered = answers.some(a => a.author === currentUser);
 
-        function renderQuestion() {
-            if (!currentQuestion) return;
-            document.getElementById('questionTitle').innerText = currentQuestion.title;
-            if (Date.now() >= currentQuestion.expiresAt) {
-                document.getElementById('timerText').innerText = "תשובות גלויות";
-                document.getElementById('questionStatusBox').classList.add('hidden');
-            } else {
-                startTimer(currentQuestion.expiresAt);
-            }
-            checkUserAnsweredState();
-        }
-
-        function checkUserAnsweredState() {
-            if (!currentQuestion) return;
-            const currentUser = localStorage.getItem('yapping_user');
-            const hasAnsweredLocal = localStorage.getItem(`answered_${currentQuestion.id}`) === 'true';
-            const hasAnsweredInList = activeAnswers.some(a => a.author === currentUser);
-
-            if (hasAnsweredLocal || hasAnsweredInList) {
+            if (hasAnswered) {
                 document.getElementById('answerFormContainer').classList.add('hidden');
                 document.getElementById('alreadyAnsweredNotice').classList.remove('hidden');
             } else {
@@ -422,75 +414,83 @@
             }
         }
 
+        // Admin: Publish Question
         function publishQuestion() {
             const text = document.getElementById('newQuestionText').value.trim();
-            if (!text) return;
+            if (!text || !isAdmin) return;
+
+            let questions = getStoredQuestions();
             const now = Date.now();
-            db.collection('questions').add({ title: text, createdAt: now, expiresAt: now + (24 * 60 * 60 * 1000) }).then(() => {
-                document.getElementById('newQuestionText').value = '';
-            });
+            const newQ = {
+                id: 'q_' + now,
+                title: text,
+                createdAt: now,
+                expiresAt: now + (24 * 60 * 60 * 1000)
+            };
+
+            questions.unshift(newQ); // Add to top
+            saveStoredQuestions(questions);
+            document.getElementById('newQuestionText').value = '';
+            loadAppData();
+            alert("השאלה פורסמה בהצלחה!");
         }
 
         function deleteCurrentQuestion() {
-            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
-            if (!isAdmin || !currentQuestion) return;
-            if (confirm("למחוק את השאלה הנוכחית?")) {
-                db.collection('questions').doc(currentQuestion.id).delete();
+            if (!isAdmin) return;
+            let questions = getStoredQuestions();
+            if (questions.length > 0) {
+                if (confirm("למחוק את השאלה הנוכחית?")) {
+                    questions.shift();
+                    saveStoredQuestions(questions);
+                    loadAppData();
+                }
             }
         }
 
-        let activeAnswers = [];
-
+        // Submit Answer
         function submitAnswer() {
             const text = document.getElementById('userAnswerText').value.trim();
-            const currentUser = localStorage.getItem('yapping_user');
-            if (!text || !currentQuestion) return;
+            let questions = getStoredQuestions();
+            if (!text || questions.length === 0) return;
+            const currentQ = questions[0];
 
-            if (activeAnswers.some(a => a.author === currentUser)) {
+            let answers = getStoredAnswers();
+            if (answers.some(a => a.questionId === currentQ.id && a.author === currentUser)) {
                 alert("כבר ענית על השאלה הזו!");
                 return;
             }
 
-            db.collection('answers').add({
-                questionId: currentQuestion.id,
+            const newAns = {
+                id: 'ans_' + Date.now(),
+                questionId: currentQ.id,
                 author: currentUser,
                 text: text,
                 createdAt: Date.now(),
                 comments: []
-            }).then(() => {
-                localStorage.setItem(`answered_${currentQuestion.id}`, 'true');
-                document.getElementById('userAnswerText').value = '';
-                checkUserAnsweredState();
-            });
+            };
+
+            answers.push(newAns);
+            saveStoredAnswers(answers);
+            document.getElementById('userAnswerText').value = '';
+            loadAnswersForQuestion(currentQ.id);
+            checkUserAnsweredState(currentQ.id);
         }
 
-        function loadAnswers(qId) {
-            db.collection('answers').where('questionId', '==', qId).onSnapshot(snapshot => {
-                activeAnswers = [];
-                snapshot.forEach(doc => activeAnswers.push({ id: doc.id, ...doc.data() }));
-                renderAnswers();
-                checkUserAnsweredState();
-            });
+        function loadAnswersForQuestion(qId) {
+            let answers = getStoredAnswers().filter(a => a.questionId === qId);
+            renderAnswers(answers, qId);
         }
 
-        function loadAnswersDemo() {
-            activeAnswers = [
-                { id: '1', author: 'מאיה', text: 'שכחתי שחברתי את המחשב לרמקול בסלון ופתחתי סרטון בטיקטוק במקס ווליום 💀', createdAt: Date.now() - 3600000, comments: [] }
-            ];
-            renderAnswers();
-            checkUserAnsweredState();
-        }
-
-        function renderAnswers() {
+        function renderAnswers(answers, qId) {
             const container = document.getElementById('answersList');
-            const currentUser = localStorage.getItem('yapping_user');
-            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
-            document.getElementById('answersCount').innerText = activeAnswers.length;
+            document.getElementById('answersCount').innerText = answers.length;
             container.innerHTML = '';
 
-            const isLocked = currentQuestion && Date.now() < currentQuestion.expiresAt;
+            let questions = getStoredQuestions();
+            const currentQ = questions.find(q => q.id === qId);
+            const isLocked = currentQ && Date.now() < currentQ.expiresAt;
 
-            activeAnswers.forEach(ans => {
+            answers.forEach(ans => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2";
 
@@ -511,7 +511,7 @@
                         </div>
                         <p class="text-sm text-gray-800 leading-snug">${ans.text}</p>
                         <div class="pt-2 border-t border-purple-50 space-y-1">
-                            ${(ans.comments || []).map(c => `<div class="text-xs bg-purple-50 p-1.5 rounded-lg"><span class="font-semibold text-purple-800">${c.author}:</span>${c.text}</div>`).join('')}
+                            ${(ans.comments || []).map(c => `<div class="text-xs bg-purple-50 p-1.5 rounded-lg flex justify-between"><span><span class="font-semibold text-purple-800">${c.author}:</span>${c.text}</span></div>`).join('')}
                             <div class="flex gap-1 mt-2">
                                 <input type="text" id="comment-input-${ans.id}" placeholder="תגובה (עד 100 תווים)" maxlength="100" class="flex-1 text-xs border border-purple-200 rounded-lg p-1.5 focus:outline-none">
                                 <button onclick="addComment('${ans.id}')" class="bg-purple-600 text-white text-xs px-3 rounded-lg font-bold">שלח</button>
@@ -526,51 +526,56 @@
         function addComment(ansId) {
             const input = document.getElementById(`comment-input-${ansId}`);
             const text = input ? input.value.trim() : '';
-            const currentUser = localStorage.getItem('yapping_user');
             if (!text) return;
 
-            db.collection('answers').doc(ansId).update({
-                comments: firebase.firestore.FieldValue.arrayUnion({ author: currentUser, text: text })
-            });
-        }
-
-        function deleteAnswer(ansId) {
-            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
-            if (!isAdmin) return;
-            if (confirm("למחוק תשובה זו?")) {
-                db.collection('answers').doc(ansId).delete();
+            let answers = getStoredAnswers();
+            const ans = answers.find(a => a.id === ansId);
+            if (ans) {
+                ans.comments = ans.comments || [];
+                ans.comments.push({ author: currentUser, text: text });
+                saveStoredAnswers(answers);
+                let questions = getStoredQuestions();
+                loadAnswersForQuestion(questions[0].id);
             }
         }
 
-        let dailyFeedItems = [];
+        function deleteAnswer(ansId) {
+            if (!isAdmin) return;
+            if (confirm("למחוק תשובה זו?")) {
+                let answers = getStoredAnswers().filter(a => a.id !== ansId);
+                saveStoredAnswers(answers);
+                let questions = getStoredQuestions();
+                loadAnswersForQuestion(questions[0].id);
+            }
+        }
 
+        // Daily Wall
         function submitDailyMessage() {
             const text = document.getElementById('dailyText').value.trim();
-            const currentUser = localStorage.getItem('yapping_user');
             if (!text) return;
 
-            db.collection('dailyFeed').add({
+            let daily = getStoredDaily();
+            const newMsg = {
+                id: 'd_' + Date.now(),
                 author: currentUser,
                 text: text,
                 createdAt: Date.now(),
                 reactions: {}
-            }).then(() => {
-                document.getElementById('dailyText').value = '';
-            });
+            };
+
+            daily.unshift(newMsg);
+            saveStoredDaily(daily);
+            document.getElementById('dailyText').value = '';
+            loadDailyFeed();
         }
 
-        function renderDailyFeedDemo() {
-            dailyFeedItems = [{ id: 'd1', author: 'גל', text: 'בוקר טוב אהובות!', createdAt: Date.now() - 1800000, reactions: {'❤️': 3} }];
-            renderDailyFeed(dailyFeedItems);
-        }
-
-        function renderDailyFeed(items) {
+        function loadDailyFeed() {
+            let daily = getStoredDaily();
             const container = document.getElementById('dailyFeed');
-            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!container) return;
             container.innerHTML = '';
 
-            items.forEach(item => {
+            daily.forEach(item => {
                 const card = document.createElement('div');
                 card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2";
                 card.innerHTML = `
@@ -584,6 +589,7 @@
                     <p class="text-sm text-gray-800">${item.text}</p>
                     <div class="flex gap-2 pt-1">
                         <button onclick="reactDaily('${item.id}', '❤️')" class="text-xs bg-pink-50 border border-pink-100 px-2 py-1 rounded-full">❤️ ${item.reactions?.['❤️'] || 0}</button>
+                        <button onclick="reactDaily('${item.id}', '🔥')" class="text-xs bg-orange-50 border border-orange-100 px-2 py-1 rounded-full">🔥 ${item.reactions?.['🔥'] || 0}</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -591,47 +597,50 @@
         }
 
         function deleteDailyMessage(id) {
-            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!isAdmin) return;
-            db.collection('dailyFeed').doc(id).delete();
+            let daily = getStoredDaily().filter(i => i.id !== id);
+            saveStoredDaily(daily);
+            loadDailyFeed();
         }
 
         function reactDaily(id, emoji) {
-            const item = dailyFeedItems.find(i => i.id === id);
+            let daily = getStoredDaily();
+            const item = daily.find(i => i.id === id);
             if (item) {
                 item.reactions = item.reactions || {};
                 item.reactions[emoji] = (item.reactions[emoji] || 0) + 1;
-                renderDailyFeed(dailyFeedItems);
+                saveStoredDaily(daily);
+                loadDailyFeed();
             }
         }
 
         function loadHistory() {
             const container = document.getElementById('historyList');
-            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!container) return;
             container.innerHTML = '';
-            db.collection('questions').orderBy('createdAt', 'desc').get().then(snapshot => {
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const card = document.createElement('div');
-                    card.className = "bg-white p-3 rounded-2xl border border-purple-100 text-xs flex justify-between items-center";
-                    card.innerHTML = `
-                        <div>
-                            <p class="font-bold text-gray-800">${data.title}</p>
-                            <span class="text-gray-400">${new Date(data.createdAt).toLocaleDateString('he-IL')}</span>
-                        </div>
-                        ${isAdmin ? `<button onclick="deleteQuestionHistory('\${doc.id}')" class="text-red-500 p-1"><i class="fa-solid fa-trash"></i></button>` : ''}
-                    `;
-                    container.appendChild(card);
-                });
+            let questions = getStoredQuestions();
+
+            questions.forEach(data => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded-2xl border border-purple-100 text-xs flex justify-between items-center";
+                card.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800">${data.title}</p>
+                        <span class="text-gray-400">${new Date(data.createdAt).toLocaleDateString('he-IL')}</span>
+                    </div>
+                    ${isAdmin ? `<button onclick="deleteQuestionHistory('\${data.id}')" class="text-red-500 p-1"><i class="fa-solid fa-trash"></i></button>` : ''}
+                `;
+                container.appendChild(card);
             });
         }
 
         function deleteQuestionHistory(qId) {
-            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!isAdmin) return;
             if (confirm("למחוק שאלה זו?")) {
-                db.collection('questions').doc(qId).delete().then(() => loadHistory());
+                let questions = getStoredQuestions().filter(q => q.id !== qId);
+                saveStoredQuestions(questions);
+                loadHistory();
+                loadAppData();
             }
         }
 
