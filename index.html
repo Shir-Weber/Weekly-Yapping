@@ -34,17 +34,16 @@
         .gradient-bg {
             background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
         .blur-content {
             filter: blur(6px);
             pointer-events: none;
         }
         .pb-safe {
             padding-bottom: env(safe-area-inset-bottom, 1rem);
+        }
+        .avatar-img {
+            object-fit: cover;
+            border-radius: 9999px;
         }
     </style>
 </head>
@@ -57,9 +56,11 @@
                 <i class="fa-solid fa-comments text-2xl text-yellow-300"></i>
                 <h1 class="text-xl font-black tracking-wide">Weekly Yapping</h1>
             </div>
-            <div id="userBadge" class="text-xs bg-white/20 px-3 py-1 rounded-full border border-white/30 hidden items-center gap-1">
+            <div id="userBadge" class="text-xs bg-white/20 px-3 py-1 rounded-full border border-white/30 hidden items-center gap-2">
+                <img id="userHeaderAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=default" class="w-6 h-6 rounded-full bg-white border border-purple-200">
                 <span id="userNameDisplay" class="font-semibold"></span>
-                <button onclick="logout()" class="mr-1 text-red-200 hover:text-white"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="openAvatarModal()" title="שינוי אבטר" class="text-yellow-200 hover:text-white mr-1"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="logout()" title="התנתקות" class="text-red-200 hover:text-white"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
@@ -68,12 +69,12 @@
     <main class="max-w-md mx-auto w-full p-4 flex-1">
 
         <!-- AUTH SCREEN -->
-        <div id="authScreen" class="bg-white p-6 rounded-3xl shadow-xl border border-purple-100 text-center mt-8">
-            <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                <i class="fa-solid fa-user-sparkles"></i>
+        <div id="authScreen" class="bg-white p-6 rounded-3xl shadow-xl border border-purple-100 text-center mt-8 space-y-4">
+            <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner relative">
+                <img id="loginAvatarPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=happy" class="w-full h-full rounded-full">
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">ברוכות הבאות!</h2>
-            <p class="text-gray-500 text-sm mb-6">הכניסי את שמיך כדי להתחיל ב-Yapping</p>
+            <h2 class="text-2xl font-bold text-gray-800">ברוכות הבאות! 👋</h2>
+            <p class="text-gray-500 text-sm">הכניסי את שמיך כדי להתחיל ב-Yapping</p>
             
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <input type="text" id="loginName" placeholder="איך קוראים לך?" required 
@@ -82,6 +83,14 @@
                 <div id="adminPasswordGroup" class="hidden">
                     <input type="password" id="adminPassword" placeholder="סיסמת אדמין" 
                            class="w-full px-4 py-3 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 text-center font-medium">
+                </div>
+
+                <!-- Avatar Selection Bar -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-2">בחרי תמונת פרופיל / אווטאר:</label>
+                    <div id="avatarPicker" class="flex justify-center gap-2 flex-wrap">
+                        <!-- Dynamic Avatars -->
+                    </div>
                 </div>
 
                 <button type="submit" class="w-full gradient-bg text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-95 transition">
@@ -111,12 +120,17 @@
                 </div>
 
                 <!-- Active Question Card -->
-                <div id="activeQuestionCard" class="bg-white rounded-3xl p-5 shadow-sm border border-purple-100 space-y-4">
+                <div id="activeQuestionCard" class="bg-white rounded-3xl p-5 shadow-sm border border-purple-100 space-y-4 relative">
                     <div class="flex justify-between items-start">
                         <span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full">השאלה הפעילה</span>
-                        <div id="timerBadge" class="flex items-center gap-1 bg-rose-50 text-rose-600 text-xs font-bold px-2.5 py-1 rounded-full border border-rose-100">
-                            <i class="fa-regular fa-clock"></i>
-                            <span id="timerText">--:--:--</span>
+                        <div class="flex items-center gap-2">
+                            <div id="timerBadge" class="flex items-center gap-1 bg-rose-50 text-rose-600 text-xs font-bold px-2.5 py-1 rounded-full border border-rose-100">
+                                <i class="fa-regular fa-clock"></i>
+                                <span id="timerText">--:--:--</span>
+                            </div>
+                            <button id="adminDeleteQuestionBtn" onclick="deleteCurrentQuestion()" title="מחיקת שאלה (אדמין)" class="hidden text-red-500 hover:text-red-700 text-sm bg-red-50 p-1.5 rounded-full">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -130,7 +144,7 @@
 
                     <!-- Answer Form -->
                     <div id="answerFormContainer" class="pt-2 border-t border-purple-50">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">התשובה שלך (עד 300 תווים, פעם אחת בלבד):</label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">התשובה שלך (עד 300 תווים, תשובה אחת בלבד):</label>
                         <textarea id="userAnswerText" maxlength="300" placeholder="תרשמי פה את התשובה שלך..." 
                                   class="w-full p-3 border border-purple-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" rows="3"></textarea>
                         <div class="flex justify-between items-center mt-2">
@@ -144,7 +158,7 @@
                     <!-- Lock Notice if Answered -->
                     <div id="alreadyAnsweredNotice" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-center gap-2">
                         <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                        <span>ענית על השאלה! התשובה נשמרה ותיחשף לכולן בתום הזמן.</span>
+                        <span>ענית על השאלה! ניתן לענות רק פעם אחת. התשובה נשמרה ותיחשף לכולן בתום הזמן.</span>
                     </div>
                 </div>
 
@@ -176,10 +190,6 @@
                     </button>
                 </div>
 
-                <div id="dailyAlreadySubmitted" class="hidden bg-purple-100 text-purple-800 p-3 rounded-2xl text-xs text-center font-medium">
-                    פרסמת את המסר היומי שלך להיום! חזרי מחר ב-24 שעות הבאות 💖
-                </div>
-
                 <!-- Daily Feed -->
                 <div id="dailyFeed" class="space-y-3">
                     <!-- Dynamic Messages -->
@@ -196,6 +206,15 @@
 
         </div>
     </main>
+
+    <!-- Modal Change Avatar -->
+    <div id="avatarModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-5 rounded-3xl max-w-xs w-full text-center space-y-4 shadow-xl">
+            <h3 class="font-bold text-gray-800">בחרי תמונת פרופיל חדשה</h3>
+            <div id="modalAvatarPicker" class="flex justify-center gap-2 flex-wrap"></div>
+            <button onclick="closeAvatarModal()" class="w-full bg-gray-200 text-gray-700 py-2 rounded-xl font-semibold text-sm">סגירה</button>
+        </div>
+    </div>
 
     <!-- Bottom Navigation Bar -->
     <nav id="bottomNav" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-purple-100 py-2 px-6 flex justify-around items-center z-50 pb-safe">
@@ -230,411 +249,62 @@
         }
         const db = firebase.firestore();
 
-        // Local Storage Fallback & State Management
+        // Preset Avatars
+        const AVATARS = [
+            'https://api.dicebear.com/7.x/bottts/svg?seed=happy',
+            'https://api.dicebear.com/7.x/bottts/svg?seed=sparkles',
+            'https://api.dicebear.com/7.x/bottts/svg?seed=sunshine',
+            'https://api.dicebear.com/7.x/bottts/svg?seed=queen',
+            'https://api.dicebear.com/7.x/bottts/svg?seed=star'
+        ];
+
+        let selectedAvatar = localStorage.getItem('yapping_avatar') || AVATARS[0];
         let currentUser = localStorage.getItem('yapping_user') || '';
         let isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
         let currentQuestion = null;
         let timerInterval = null;
 
+        // Init Avatars UI
+        function initAvatarPickers() {
+            const picker = document.getElementById('avatarPicker');
+            const modalPicker = document.getElementById('modalAvatarPicker');
+            picker.innerHTML = '';
+            modalPicker.innerHTML = '';
+
+            AVATARS.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = `w-10 h-10 rounded-full border-2 cursor-pointer p-0.5 hover:scale-110 transition ${selectedAvatar === url ? 'border-purple-600 bg-purple-100' : 'border-transparent'}`;
+                img.onclick = () => selectAvatar(url);
+                picker.appendChild(img);
+
+                const imgModal = img.cloneNode();
+                imgModal.onclick = () => { selectAvatar(url); closeAvatarModal(); };
+                modalPicker.appendChild(imgModal);
+            });
+        }
+
+        function selectAvatar(url) {
+            selectedAvatar = url;
+            localStorage.setItem('yapping_avatar', url);
+            document.getElementById('loginAvatarPreview').src = url;
+            document.getElementById('userHeaderAvatar').src = url;
+            initAvatarPickers();
+        }
+
+        function openAvatarModal() { document.getElementById('avatarModal').classList.remove('hidden'); }
+        function closeAvatarModal() { document.getElementById('avatarModal').classList.add('hidden'); }
+
         // On Load
         window.onload = () => {
+            initAvatarPickers();
             if (currentUser) {
                 showApp();
             }
-            // Realtime Listeners
             setupListeners();
         };
 
-        // Login Logic
+        // Login Handler
         document.getElementById('loginName').addEventListener('input', (e) => {
             const val = e.target.value.trim().toLowerCase();
-            const adminGroup = document.getElementById('adminPasswordGroup');
-            if (val === 'admin') {
-                adminGroup.classList.remove('hidden');
-            } else {
-                adminGroup.classList.add('hidden');
-            }
-        });
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const name = document.getElementById('loginName').value.trim();
-            const pass = document.getElementById('adminPassword').value;
-
-            if (name.toLowerCase() === 'admin') {
-                if (pass === 'Aa123456') {
-                    currentUser = 'Admin';
-                    isAdmin = true;
-                } else {
-                    alert('סיסמת אדמין שגויה');
-                    return;
-                }
-            } else {
-                currentUser = name;
-                isAdmin = false;
-            }
-
-            localStorage.setItem('yapping_user', currentUser);
-            localStorage.setItem('yapping_is_admin', isAdmin);
-            showApp();
-        }
-
-        function logout() {
-            localStorage.removeItem('yapping_user');
-            localStorage.removeItem('yapping_is_admin');
-            location.reload();
-        }
-
-        function showApp() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('appContent').classList.remove('hidden');
-            document.getElementById('bottomNav').classList.remove('hidden');
-            document.getElementById('userBadge').classList.remove('hidden');
-            document.getElementById('userBadge').classList.add('flex');
-            document.getElementById('userNameDisplay').innerText = currentUser;
-
-            if (isAdmin) {
-                document.getElementById('adminPanel').classList.remove('hidden');
-            }
-        }
-
-        // Tab Switching
-        function switchTab(tab) {
-            ['yapp', 'wall', 'history'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                const navBtn = document.getElementById(`nav-${t}`);
-                navBtn.classList.remove('text-purple-600');
-                navBtn.classList.add('text-gray-400');
-            });
-
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`nav-${tab}`);
-            activeBtn.classList.remove('text-gray-400');
-            activeBtn.classList.add('text-purple-600');
-        }
-
-        // Character Counter
-        document.getElementById('userAnswerText').addEventListener('input', (e) => {
-            document.getElementById('charCount').innerText = `${e.target.value.length} / 300`;
-        });
-
-        // Realtime Firebase Listeners with Local Fallback
-        function setupListeners() {
-            // Active Question
-            db.collection('questions').orderBy('createdAt', 'desc').limit(1).onSnapshot(snapshot => {
-                if (!snapshot.empty) {
-                    const doc = snapshot.docs[0];
-                    currentQuestion = { id: doc.id, ...doc.data() };
-                    renderQuestion();
-                    loadAnswers(currentQuestion.id);
-                } else {
-                    renderQuestionDemo();
-                }
-            }, err => {
-                renderQuestionDemo();
-            });
-
-            // Daily Wall Feed
-            db.collection('dailyFeed').orderBy('createdAt', 'desc').limit(20).onSnapshot(snapshot => {
-                let items = [];
-                snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-                renderDailyFeed(items);
-            }, err => {
-                renderDailyFeedDemo();
-            });
-        }
-
-        // Question Countdown Timer
-        function startTimer(endTime) {
-            if (timerInterval) clearInterval(timerInterval);
-
-            function update() {
-                const now = new Date().getTime();
-                const distance = endTime - now;
-
-                if (distance < 0) {
-                    clearInterval(timerInterval);
-                    document.getElementById('timerText').innerText = "תשובות נחשפו!";
-                    document.getElementById('questionStatusBox').classList.add('hidden');
-                    renderAnswers(); // Refresh view
-                    return false;
-                }
-
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                document.getElementById('timerText').innerText = 
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                return true;
-            }
-
-            if (update()) {
-                timerInterval = setInterval(update, 1000);
-            }
-        }
-
-        // Demo Data Fallback for Question
-        function renderQuestionDemo() {
-            const demoCreatedAt = Date.now() - (2 * 60 * 60 * 1000); // 2 hours ago
-            currentQuestion = {
-                id: 'demo123',
-                title: 'מה הדבר הכי מביך שקרה לך השבוע ועדיין לא סיפרת לאף אחת?',
-                createdAt: demoCreatedAt,
-                expiresAt: demoCreatedAt + (24 * 60 * 60 * 1000)
-            };
-            renderQuestion();
-            loadAnswersDemo();
-        }
-
-        function renderQuestion() {
-            if (!currentQuestion) return;
-            document.getElementById('questionTitle').innerText = currentQuestion.title;
-            const isExpired = Date.now() >= currentQuestion.expiresAt;
-            
-            if (isExpired) {
-                document.getElementById('timerText').innerText = "תשובות גלויות";
-                document.getElementById('questionStatusBox').classList.add('hidden');
-            } else {
-                startTimer(currentQuestion.expiresAt);
-            }
-
-            // Check if user already answered
-            const userAnswers = JSON.parse(localStorage.getItem(`answered_${currentQuestion.id}`) || 'false');
-            if (userAnswers) {
-                document.getElementById('answerFormContainer').classList.add('hidden');
-                document.getElementById('alreadyAnsweredNotice').classList.remove('hidden');
-            } else {
-                document.getElementById('answerFormContainer').classList.remove('hidden');
-                document.getElementById('alreadyAnsweredNotice').classList.add('hidden');
-            }
-        }
-
-        // Publish Question (Admin)
-        function publishQuestion() {
-            const text = document.getElementById('newQuestionText').value.trim();
-            if (!text) return;
-
-            const now = Date.now();
-            const questionData = {
-                title: text,
-                createdAt: now,
-                expiresAt: now + (24 * 60 * 60 * 1000)
-            };
-
-            db.collection('questions').add(questionData).then(() => {
-                document.getElementById('newQuestionText').value = '';
-                triggerNotification("Weekly Yapping!", "שאלה חדשה התפרסמה! יש לך 24 שעות לענות.");
-            }).catch(() => {
-                // Fallback to local
-                currentQuestion = { id: 'local_' + now, ...questionData };
-                renderQuestion();
-            });
-        }
-
-        // Submit Answer
-        let activeAnswers = [];
-
-        function submitAnswer() {
-            const answerText = document.getElementById('userAnswerText').value.trim();
-            if (!answerText || !currentQuestion) return;
-
-            const answerObj = {
-                questionId: currentQuestion.id,
-                author: currentUser,
-                text: answerText,
-                createdAt: Date.now(),
-                comments: []
-            };
-
-            db.collection('answers').add(answerObj).then(() => {
-                localStorage.setItem(`answered_${currentQuestion.id}`, 'true');
-                document.getElementById('userAnswerText').value = '';
-                renderQuestion();
-            }).catch(() => {
-                activeAnswers.push(answerObj);
-                localStorage.setItem(`answered_${currentQuestion.id}`, 'true');
-                renderAnswers();
-                renderQuestion();
-            });
-        }
-
-        function loadAnswers(qId) {
-            db.collection('answers').where('questionId', '==', qId).onSnapshot(snapshot => {
-                activeAnswers = [];
-                snapshot.forEach(doc => activeAnswers.push({ id: doc.id, ...doc.data() }));
-                renderAnswers();
-            });
-        }
-
-        function loadAnswersDemo() {
-            activeAnswers = [
-                { id: '1', author: 'מאיה', text: 'שכחתי שחברתי את המחשב לרמקול בסלון ופתחתי סרטון בטיקטוק במקס ווליום 💀', createdAt: Date.now() - 3600000, comments: [] },
-                { id: '2', author: 'נועה', text: 'אמרתי לשליח של הפיצה "אוהבת אותך" במקום "תודה רבה". מתי לעבור דירה?', createdAt: Date.now() - 7200000, comments: [{author: 'עדי', text: 'חחחחח מתה'}] }
-            ];
-            renderAnswers();
-        }
-
-        function renderAnswers() {
-            const container = document.getElementById('answersList');
-            document.getElementById('answersCount').innerText = activeAnswers.length;
-            container.innerHTML = '';
-
-            const isLocked = Date.now() < currentQuestion.expiresAt;
-
-            activeAnswers.forEach(ans => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm relative space-y-2";
-
-                if (isLocked) {
-                    // Hidden Mode
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between text-xs text-gray-400">
-                            <span class="font-bold text-purple-600">משתמשת ענתה 🔒</span>
-                            <span>${new Date(ans.createdAt).toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                        <div class="blur-content select-none text-sm text-gray-800">
-                            התשובה הזו נסתרת כרגע ותיחשף רק בתום 24 השעות לכולן!
-                        </div>
-                    `;
-                } else {
-                    // Revealed Mode
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-xs text-purple-700">${ans.author}</span>
-                            ${isAdmin ? `<button onclick="deleteAnswer('\${ans.id}')" class="text-xs text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>` : ''}
-                        </div>
-                        <p class="text-sm text-gray-800 leading-snug">${ans.text}</p>
-                        
-                        <!-- Comments Section -->
-                        <div class="pt-2 border-t border-purple-50 space-y-1">
-                            ${(ans.comments || []).map(c => `
-                                <div class="text-xs bg-purple-50 p-1.5 rounded-lg">
-                                    <span class="font-semibold text-purple-800">${c.author}:</span>${c.text}
-                                </div>
-                            `).join('')}
-                            <div class="flex gap-1 mt-2">
-                                <input type="text" id="comment-input-${ans.id}" placeholder="תגובה (עד 100 תווים)" maxlength="100" class="flex-1 text-xs border border-purple-200 rounded-lg p-1.5 focus:outline-none">
-                                <button onclick="addComment('${ans.id}')" class="bg-purple-600 text-white text-xs px-3 rounded-lg font-bold">שלח</button>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                container.appendChild(card);
-            });
-        }
-
-        function addComment(ansId) {
-            const input = document.getElementById(`comment-input-${ansId}`);
-            const text = input.value.trim();
-            if (!text) return;
-
-            const commentObj = { author: currentUser, text: text };
-            
-            db.collection('answers').doc(ansId).update({
-                comments: firebase.firestore.FieldValue.arrayUnion(commentObj)
-            }).catch(() => {
-                const ans = activeAnswers.find(a => a.id === ansId);
-                if (ans) {
-                    ans.comments = ans.comments || [];
-                    ans.comments.push(commentObj);
-                    renderAnswers();
-                }
-            });
-        }
-
-        function deleteAnswer(ansId) {
-            if (!isAdmin) return;
-            db.collection('answers').doc(ansId).delete().then(() => {
-                renderAnswers();
-            }).catch(() => {
-                activeAnswers = activeAnswers.filter(a => a.id !== ansId);
-                renderAnswers();
-            });
-        }
-
-        // Daily Message Feed
-        let dailyFeedItems = [];
-
-        function submitDailyMessage() {
-            const text = document.getElementById('dailyText').value.trim();
-            if (!text) return;
-
-            const msgObj = {
-                author: currentUser,
-                text: text,
-                createdAt: Date.now(),
-                reactions: {}
-            };
-
-            db.collection('dailyFeed').add(msgObj).then(() => {
-                document.getElementById('dailyText').value = '';
-            }).catch(() => {
-                dailyFeedItems.unshift(msgObj);
-                renderDailyFeed(dailyFeedItems);
-                document.getElementById('dailyText').value = '';
-            });
-        }
-
-        function renderDailyFeedDemo() {
-            dailyFeedItems = [
-                { id: 'd1', author: 'גל', text: 'בוקר טוב אהובות! מי באה לקפה בצהריים?', createdAt: Date.now() - 1800000, reactions: {'❤️': 3, '☕': 2} }
-            ];
-            renderDailyFeed(dailyFeedItems);
-        }
-
-        function renderDailyFeed(items) {
-            const container = document.getElementById('dailyFeed');
-            container.innerHTML = '';
-
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2";
-                card.innerHTML = `
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="font-bold text-pink-600">${item.author}</span>
-                        <span class="text-gray-400">${new Date(item.createdAt).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}</span>
-                    </div>
-                    <p class="text-sm text-gray-800">${item.text}</p>
-                    <div class="flex gap-2 pt-1">
-                        <button onclick="reactDaily('${item.id}', '❤️')" class="text-xs bg-pink-50 border border-pink-100 px-2 py-1 rounded-full">❤️ ${item.reactions?.['❤️'] || 0}</button>
-                        <button onclick="reactDaily('${item.id}', '😂')" class="text-xs bg-yellow-50 border border-yellow-100 px-2 py-1 rounded-full">😂 ${item.reactions?.['😂'] || 0}</button>
-                        <button onclick="reactDaily('${item.id}', '🔥')" class="text-xs bg-orange-50 border border-orange-100 px-2 py-1 rounded-full">🔥 ${item.reactions?.['🔥'] || 0}</button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function reactDaily(id, emoji) {
-            // Local reaction increment fallback
-            const item = dailyFeedItems.find(i => i.id === id);
-            if (item) {
-                item.reactions = item.reactions || {};
-                item.reactions[emoji] = (item.reactions[emoji] || 0) + 1;
-                renderDailyFeed(dailyFeedItems);
-            }
-        }
-
-        // Push Notifications Setup
-        function toggleNotificationPrompt() {
-            if ("Notification" in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        alert("התראות הופעלו בהצלחה!");
-                    }
-                });
-            } else {
-                alert("הדפדפן שלך אינו תומך בהתראות");
-            }
-        }
-
-        function triggerNotification(title, body) {
-            if ("Notification" in window && Notification.permission === "granted") {
-                new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/3820/3820107.png' });
-            }
-        }
-    </script>
-</body>
-</html>
+            const
