@@ -53,7 +53,7 @@
                 <h1 class="text-xl font-black tracking-wide">Weekly Yapping</h1>
             </div>
             <div id="userBadge" class="text-xs bg-white/20 px-3 py-1 rounded-full border border-white/30 hidden items-center gap-2">
-                <img id="userHeaderAvatar" src="" class="w-6 h-6 rounded-full bg-white border border-purple-200">
+                <img id="userHeaderAvatar" src="" class="w-6 h-6 rounded-full bg-white border border-purple-200 object-cover">
                 <span id="userNameDisplay" class="font-semibold"></span>
                 <button onclick="openAvatarModal()" title="שינוי אבטר" class="text-yellow-200 hover:text-white mr-1"><i class="fa-solid fa-pen"></i></button>
                 <button onclick="logout()" title="התנתקות" class="text-red-200 hover:text-white"><i class="fa-solid fa-right-from-bracket"></i></button>
@@ -66,30 +66,32 @@
 
         <!-- AUTH SCREEN -->
         <div id="authScreen" class="bg-white p-6 rounded-3xl shadow-xl border border-purple-100 text-center mt-8 space-y-4">
-            <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner overflow-hidden">
+            <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner overflow-hidden border-2 border-purple-200">
                 <img id="loginAvatarPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=happy" class="w-full h-full object-cover">
             </div>
             <h2 class="text-2xl font-bold text-gray-800">ברוכות הבאות! 👋</h2>
-            <p class="text-gray-500 text-sm">הכניסי את שמיך כדי להתחיל ב-Yapping</p>
+            <p class="text-gray-500 text-sm">הכניסי את שמיך ובחרי אבטר כדי להתחיל</p>
             
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="text" id="loginName" placeholder="איך קוראים לך?" required 
-                       class="w-full px-4 py-3 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 text-center font-medium">
+            <form onsubmit="handleLogin(event)" class="space-y-4 text-right">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">שם משתמש / כינוי:</label>
+                    <input type="text" id="loginName" placeholder="למשל: מאיה או admin" required 
+                           class="w-full px-4 py-3 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 text-right font-medium">
+                </div>
                 
-                <div id="adminPasswordGroup" class="hidden">
-                    <input type="password" id="adminPassword" placeholder="סיסמת אדמין" 
-                           class="w-full px-4 py-3 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 text-center font-medium">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">סיסמה (רק לאדמין, לאחרות להשאיר ריק):</label>
+                    <input type="password" id="adminPassword" placeholder="הקלידי סיסמה אם את אדמין" 
+                           class="w-full px-4 py-3 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 text-right font-medium">
                 </div>
 
                 <!-- Avatar Selection Bar -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 mb-2">בחרי תמונת פרופיל:</label>
-                    <div id="avatarPicker" class="flex justify-center gap-3 flex-wrap">
-                        <!-- Dynamic Avatars injected by JS -->
-                    </div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-2">בחרי תמונת פרופיל:</label>
+                    <div id="avatarPicker" class="flex justify-center gap-3 flex-wrap"></div>
                 </div>
 
-                <button type="submit" class="w-full gradient-bg text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-95 transition">
+                <button type="submit" class="w-full gradient-bg text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-95 transition mt-2">
                     להתחברות 🚀
                 </button>
             </form>
@@ -263,7 +265,7 @@
             AVATARS.forEach(url => {
                 const img = document.createElement('img');
                 img.src = url;
-                img.className = `w-12 h-12 rounded-full border-2 cursor-pointer p-0.5 hover:scale-110 transition shadow-sm \${selectedAvatar === url ? 'border-purple-600 bg-purple-100 ring-2 ring-purple-400' : 'border-gray-200 bg-white'}`;
+                img.className = `w-12 h-12 rounded-full border-2 cursor-pointer p-0.5 hover:scale-110 transition shadow-sm object-cover ${selectedAvatar === url ? 'border-purple-600 bg-purple-100 ring-2 ring-purple-400' : 'border-gray-200 bg-white'}`;
                 img.onclick = () => selectAvatar(url);
                 picker.appendChild(img);
 
@@ -297,30 +299,21 @@
         };
 
         // Login Handler
-        const loginNameInput = document.getElementById('loginName');
-        if (loginNameInput) {
-            loginNameInput.addEventListener('input', (e) => {
-                const val = e.target.value.trim().toLowerCase();
-                const adminGroup = document.getElementById('adminPasswordGroup');
-                if (val === 'admin') {
-                    adminGroup.classList.remove('hidden');
-                } else {
-                    adminGroup.classList.add('hidden');
-                }
-            });
-        }
-
         function handleLogin(e) {
             e.preventDefault();
-            const name = document.getElementById('loginName').value.trim();
-            const pass = document.getElementById('adminPassword').value;
+            const nameInput = document.getElementById('loginName');
+            const passInput = document.getElementById('adminPassword');
+            
+            if (!nameInput) return;
+            const name = nameInput.value.trim();
+            const pass = passInput ? passInput.value : '';
 
             if (name.toLowerCase() === 'admin') {
                 if (pass === 'Aa123456') {
                     currentUser = 'Admin';
                     isAdmin = true;
                 } else {
-                    alert('סיסמת אדמין שגויה');
+                    alert('סיסמת אדמין שגויה! (נסה שוב עם Aa123456)');
                     return;
                 }
             } else {
@@ -357,16 +350,16 @@
         // Tab Switching
         function switchTab(tab) {
             ['yapp', 'wall', 'history'].forEach(t => {
-                document.getElementById(`tab-\${t}`).classList.add('hidden');
-                const navBtn = document.getElementById(`nav-\${t}`);
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
                 if (navBtn) {
                     navBtn.classList.remove('text-purple-600');
                     navBtn.classList.add('text-gray-400');
                 }
             });
 
-            document.getElementById(`tab-\${tab}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`nav-\${tab}`);
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tab}`);
             if (activeBtn) {
                 activeBtn.classList.remove('text-gray-400');
                 activeBtn.classList.add('text-purple-600');
@@ -379,7 +372,7 @@
         const userAnswerTextElem = document.getElementById('userAnswerText');
         if (userAnswerTextElem) {
             userAnswerTextElem.addEventListener('input', (e) => {
-                document.getElementById('charCount').innerText = `\${e.target.value.length} / 300`;
+                document.getElementById('charCount').innerText = `${e.target.value.length} / 300`;
             });
         }
 
@@ -426,7 +419,7 @@
 
                 const timerTextElem = document.getElementById('timerText');
                 if (timerTextElem) {
-                    timerTextElem.innerText = `\${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    timerTextElem.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
                 return true;
             }
@@ -464,7 +457,7 @@
 
         function checkUserAnsweredState() {
             if (!currentQuestion) return;
-            const hasAnsweredLocal = localStorage.getItem(`answered_\${currentQuestion.id}`) === 'true';
+            const hasAnsweredLocal = localStorage.getItem(`answered_${currentQuestion.id}`) === 'true';
             const hasAnsweredInList = activeAnswers.some(a => a.author === currentUser);
 
             const formContainer = document.getElementById('answerFormContainer');
@@ -523,179 +516,4 @@
             if (!answerText) return;
 
             if (activeAnswers.some(a => a.author === currentUser)) {
-                alert("כבר ענית על השאלה הזו! ניתן לענות רק פעם אחת.");
-                return;
-            }
-
-            const answerObj = {
-                questionId: currentQuestion.id,
-                author: currentUser,
-                avatar: selectedAvatar,
-                text: answerText,
-                createdAt: Date.now(),
-                comments: []
-            };
-
-            db.collection('answers').add(answerObj).then(() => {
-                localStorage.setItem(`answered_\${currentQuestion.id}`, 'true');
-                answerTextElem.value = '';
-                checkUserAnsweredState();
-            }).catch(() => {
-                activeAnswers.push(answerObj);
-                localStorage.setItem(`answered_\${currentQuestion.id}`, 'true');
-                renderAnswers();
-                checkUserAnsweredState();
-            });
-        }
-
-        function loadAnswers(qId) {
-            db.collection('answers').where('questionId', '==', qId).onSnapshot(snapshot => {
-                activeAnswers = [];
-                snapshot.forEach(doc => activeAnswers.push({ id: doc.id, ...doc.data() }));
-                renderAnswers();
-                checkUserAnsweredState();
-            });
-        }
-
-        function loadAnswersDemo() {
-            activeAnswers = [
-                { id: '1', author: 'מאיה', avatar: AVATARS[1], text: 'שכחתי שחברתי את המחשב לרמקול בסלון ופתחתי סרטון בטיקטוק במקס ווליום 💀', createdAt: Date.now() - 3600000, comments: [] },
-                { id: '2', author: 'נועה', avatar: AVATARS[2], text: 'אמרתי לשליח של הפיצה "אוהבת אותך" במקום "תודה רבה". מתי לעבור דירה?', createdAt: Date.now() - 7200000, comments: [{author: 'עדי', text: 'חחחחח מתה'}] }
-            ];
-            renderAnswers();
-            checkUserAnsweredState();
-        }
-
-        function renderAnswers() {
-            const container = document.getElementById('answersList');
-            const countElem = document.getElementById('answersCount');
-            if (!container) return;
-            if (countElem) countElem.innerText = activeAnswers.length;
-            container.innerHTML = '';
-
-            const isLocked = currentQuestion && Date.now() < currentQuestion.expiresAt;
-
-            activeAnswers.forEach(ans => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm relative space-y-2";
-
-                if (isLocked) {
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between text-xs text-gray-400">
-                            <div class="flex items-center gap-2">
-                                <img src="\${ans.avatar || AVATARS[0]}" class="w-6 h-6 rounded-full border border-purple-200">
-                                <span class="font-bold text-purple-600">משתמשת ענתה 🔒</span>
-                            </div>
-                            <span>\${new Date(ans.createdAt).toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                        <div class="blur-content select-none text-sm text-gray-800">
-                            התשובה הזו נסתרת כרגע ותיחשף רק בתום 24 השעות לכולן!
-                        </div>
-                        \${isAdmin ? `<button onclick="deleteAnswer('${ans.id}')" title="מחיקת תשובה" class="text-xs text-red-500 hover:text-red-700 font-bold mt-1"><i class="fa-solid fa-trash"></i> מחיקה (אדמין)</button>` : ''}
-                    `;
-                } else {
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <img src="\${ans.avatar || AVATARS[0]}" class="w-7 h-7 rounded-full border border-purple-200">
-                                <span class="font-bold text-xs text-purple-700">\${ans.author}</span>
-                            </div>
-                            \${isAdmin ? `<button onclick="deleteAnswer('${ans.id}')" title="מחיקת תשובה" class="text-xs text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>` : ''}
-                        </div>
-                        <p class="text-sm text-gray-800 leading-snug">\${ans.text}</p>
-                        
-                        <div class="pt-2 border-t border-purple-50 space-y-1">
-                            \${(ans.comments || []).map(c => `
-                                <div class="text-xs bg-purple-50 p-1.5 rounded-lg flex justify-between">
-                                    <span><span class="font-semibold text-purple-800">${c.author}:</span> ${c.text}</span>
-                                </div>
-                            `).join('')}
-                            <div class="flex gap-1 mt-2">
-                                <input type="text" id="comment-input-\${ans.id}" placeholder="תגובה (עד 100 תווים)" maxlength="100" class="flex-1 text-xs border border-purple-200 rounded-lg p-1.5 focus:outline-none">
-                                <button onclick="addComment('\${ans.id}')" class="bg-purple-600 text-white text-xs px-3 rounded-lg font-bold">שלח</button>
-                            </div>
-                        </div>
-                    `;
-                }
-                container.appendChild(card);
-            });
-        }
-
-        function addComment(ansId) {
-            const input = document.getElementById(`comment-input-\${ansId}`);
-            if (!input) return;
-            const text = input.value.trim();
-            if (!text) return;
-
-            const commentObj = { author: currentUser, text: text };
-            db.collection('answers').doc(ansId).update({
-                comments: firebase.firestore.FieldValue.arrayUnion(commentObj)
-            }).catch(() => {
-                const ans = activeAnswers.find(a => a.id === ansId);
-                if (ans) {
-                    ans.comments = ans.comments || [];
-                    ans.comments.push(commentObj);
-                    renderAnswers();
-                }
-            });
-        }
-
-        function deleteAnswer(ansId) {
-            if (!isAdmin) return;
-            if (confirm("האם למחוק תשובה זו?")) {
-                db.collection('answers').doc(ansId).delete().then(() => {
-                    renderAnswers();
-                }).catch(() => {
-                    activeAnswers = activeAnswers.filter(a => a.id !== ansId);
-                    renderAnswers();
-                });
-            }
-        }
-
-        let dailyFeedItems = [];
-
-        function submitDailyMessage() {
-            const textElem = document.getElementById('dailyText');
-            if (!textElem) return;
-            const text = textElem.value.trim();
-            if (!text) return;
-
-            const msgObj = {
-                author: currentUser,
-                avatar: selectedAvatar,
-                text: text,
-                createdAt: Date.now(),
-                reactions: {}
-            };
-
-            db.collection('dailyFeed').add(msgObj).then(() => {
-                textElem.value = '';
-            }).catch(() => {
-                dailyFeedItems.unshift(msgObj);
-                renderDailyFeed(dailyFeedItems);
-                textElem.value = '';
-            });
-        }
-
-        function renderDailyFeedDemo() {
-            dailyFeedItems = [
-                { id: 'd1', author: 'גל', avatar: AVATARS[3], text: 'בוקר טוב אהובות! מי באה לקפה בצהריים?', createdAt: Date.now() - 1800000, reactions: {'❤️': 3, '☕': 2} }
-            ];
-            renderDailyFeed(dailyFeedItems);
-        }
-
-        function renderDailyFeed(items) {
-            const container = document.getElementById('dailyFeed');
-            if (!container) return;
-            container.innerHTML = '';
-
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2";
-                card.innerHTML = `
-                    <div class="flex justify-between items-center text-xs">
-                        <div class="flex items-center gap-2">
-                            <img src="\${item.avatar || AVATARS[0]}" class="w-6 h-6 rounded-full border border-pink-200">
-                            <span class="font-bold text-pink-600">\${item.author}</span>
-                        </div>
-                        <div class="flex items-center
+                alert("כבר ענית על השאלה הזו! ניתן לע
