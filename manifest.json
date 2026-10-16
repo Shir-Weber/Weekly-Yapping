@@ -1,0 +1,22 @@
+{
+  "short_name": "WeeklyYap",
+  "name": "Weekly Yapping",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3820/3820107.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3820/3820107.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#F3E8FF",
+  "theme_color": "#8B5CF6",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "אפליקציית Weekly Yapping לחברות - שאלות 24 שעות ומסר יומי"
+}
