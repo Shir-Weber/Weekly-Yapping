@@ -178,7 +178,7 @@
 
                 <!-- Submit Daily Message -->
                 <div id="dailyMessageForm" class="bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2">
-                    <textarea id="dailyText" placeholder="מה בא לך לשתף היום?" class="w-full p-3 border border-purple-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" rows="2"></textarea>
+                    <textarea id="dailyText" placeholder="מה בא לך לשתף היום?" class="w-full p-3 border border-pink-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" rows="2"></textarea>
                     <button onclick="submitDailyMessage()" class="w-full bg-pink-500 text-white font-bold py-2 rounded-xl text-sm shadow hover:bg-pink-600">
                         פרסמי מסר יומי ✨
                     </button>
@@ -256,9 +256,9 @@
             }
         }
 
-        // On Load
+        // On Load Check Session
         window.onload = () => {
-            if (currentUser) {
+            if (currentUser && currentUser !== '') {
                 showApp();
             }
             setupListeners();
@@ -308,7 +308,7 @@
                     isAdmin = false;
                     saveAndEnter();
                 } else {
-                    alert('שם משתמש או סיסמה שגויים, או שטרם נרשמת.');
+                    alert('שם משתמש או סיסמה שגויים, או שטרם נרשמת. לחצי על הירשמי כאן למטה.');
                 }
             }
         }
@@ -326,23 +326,35 @@
         }
 
         function showApp() {
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('appContent').classList.remove('hidden');
-            document.getElementById('bottomNav').classList.remove('hidden');
-            document.getElementById('userBadge').classList.remove('hidden');
-            document.getElementById('userBadge').classList.add('flex');
-            document.getElementById('userNameDisplay').innerText = currentUser;
+            const authScreen = document.getElementById('authScreen');
+            const appContent = document.getElementById('appContent');
+            const bottomNav = document.getElementById('bottomNav');
+            const userBadge = document.getElementById('userBadge');
+            
+            if (authScreen) authScreen.classList.add('hidden');
+            if (appContent) appContent.classList.remove('hidden');
+            if (bottomNav) bottomNav.classList.remove('hidden');
+            if (userBadge) {
+                userBadge.classList.remove('hidden');
+                userBadge.classList.add('flex');
+            }
+            
+            const userNameDisplay = document.getElementById('userNameDisplay');
+            if (userNameDisplay) userNameDisplay.innerText = currentUser;
 
             if (isAdmin) {
-                document.getElementById('adminPanel').classList.remove('hidden');
-                document.getElementById('adminDeleteQuestionBtn').classList.remove('hidden');
+                const adminPanel = document.getElementById('adminPanel');
+                const adminDel = document.getElementById('adminDeleteQuestionBtn');
+                if (adminPanel) adminPanel.classList.remove('hidden');
+                if (adminDel) adminDel.classList.remove('hidden');
             }
         }
 
         // Tab Switching
         function switchTab(tab) {
             ['yapp', 'wall', 'history'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const tabEl = document.getElementById(`tab-${t}`);
+                if (tabEl) tabEl.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
                 if (navBtn) {
                     navBtn.classList.remove('text-purple-600');
@@ -350,7 +362,8 @@
                 }
             });
 
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const activeTab = document.getElementById(`tab-${tab}`);
+            if (activeTab) activeTab.classList.remove('hidden');
             const activeBtn = document.getElementById(`nav-${tab}`);
             if (activeBtn) {
                 activeBtn.classList.remove('text-gray-400');
@@ -364,7 +377,8 @@
         const userAnswerTextElem = document.getElementById('userAnswerText');
         if (userAnswerTextElem) {
             userAnswerTextElem.addEventListener('input', (e) => {
-                document.getElementById('charCount').innerText = `${e.target.value.length} / 300`;
+                const countElem = document.getElementById('charCount');
+                if (countElem) countElem.innerText = `${e.target.value.length} / 300`;
             });
         }
 
@@ -398,7 +412,8 @@
 
                 if (distance < 0) {
                     clearInterval(timerInterval);
-                    document.getElementById('timerText').innerText = "תשובות נחשפו!";
+                    const timerText = document.getElementById('timerText');
+                    if (timerText) timerText.innerText = "תשובות נחשפו!";
                     const statusBox = document.getElementById('questionStatusBox');
                     if (statusBox) statusBox.classList.add('hidden');
                     renderAnswers();
@@ -433,11 +448,13 @@
 
         function renderQuestion() {
             if (!currentQuestion) return;
-            document.getElementById('questionTitle').innerText = currentQuestion.title;
+            const qTitle = document.getElementById('questionTitle');
+            if (qTitle) qTitle.innerText = currentQuestion.title;
             const isExpired = Date.now() >= currentQuestion.expiresAt;
             
             if (isExpired) {
-                document.getElementById('timerText').innerText = "תשובות גלויות";
+                const timerText = document.getElementById('timerText');
+                if (timerText) timerText.innerText = "תשובות גלויות";
                 const statusBox = document.getElementById('questionStatusBox');
                 if (statusBox) statusBox.classList.add('hidden');
             } else {
@@ -493,7 +510,8 @@
                     alert("השאלה נמחקה בהצלחה");
                 }).catch(() => {
                     currentQuestion = null;
-                    document.getElementById('questionTitle').innerText = "אין שאלה פעילה כרגע";
+                    const qTitle = document.getElementById('questionTitle');
+                    if (qTitle) qTitle.innerText = "אין שאלה פעילה כרגע";
                 });
             }
         }
@@ -736,3 +754,11 @@
 
         function toggleNotificationPrompt() {
             if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") alert("התראות הופעלו בהצלחה!");
+                });
+            }
+        }
+    </script>
+</body>
+</html>
