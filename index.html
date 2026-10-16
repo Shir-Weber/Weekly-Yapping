@@ -72,7 +72,7 @@
                 <p id="authSubtitle" class="text-gray-500 text-sm mt-1">הקלידי את פרטי החשבון שלך</p>
             </div>
             
-            <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">שם משתמש:</label>
                     <input type="text" id="authUsername" placeholder="שם משתמש" required 
@@ -230,93 +230,66 @@
         const db = firebase.firestore();
 
         let isRegisterMode = false;
-        let currentUser = localStorage.getItem('yapping_user') || '';
-        let isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
         let currentQuestion = null;
         let timerInterval = null;
 
-        // Toggle Login / Register View
-        function toggleAuthMode() {
-            isRegisterMode = !isRegisterMode;
-            const title = document.getElementById('authTitle');
-            const subtitle = document.getElementById('authSubtitle');
-            const submitBtn = document.getElementById('authSubmitBtn');
-            const toggleBtn = document.getElementById('authToggleBtn');
-
-            if (isRegisterMode) {
-                title.innerText = "הרשמה לאפליקציה";
-                subtitle.innerText = "בחרי שם משתמש וסיסמה חדשים";
-                submitBtn.innerText = "הירשמי ✨";
-                toggleBtn.innerText = "כבר יש לך חשבון? התחברי כאן";
-            } else {
-                title.innerText = "התחברות לאפליקציה";
-                subtitle.innerText = "הקלידי את פרטי החשבון שלך";
-                submitBtn.innerText = "התחברות 🚀";
-                toggleBtn.innerText = "אין לך חשבון עדיין? הירשמי כאן";
-            }
-        }
-
-        // On Load Check Session
+        // Check Session on Load
         window.onload = () => {
-            if (currentUser && currentUser !== '') {
-                showApp();
+            const savedUser = localStorage.getItem('yapping_user');
+            if (savedUser) {
+                showApp(savedUser, localStorage.getItem('yapping_is_admin') === 'true');
             }
             setupListeners();
         };
 
-        // Handle Register / Login
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('authTitle').innerText = isRegisterMode ? "הרשמה לאפליקציה" : "התחברות לאפליקציה";
+            document.getElementById('authSubtitle').innerText = isRegisterMode ? "בחרי שם משתמש וסיסמה חדשים" : "הקלידי את פרטי החשבון שלך";
+            document.getElementById('authSubmitBtn').innerText = isRegisterMode ? "הירשמי ✨" : "התחברות 🚀";
+            document.getElementById('authToggleBtn').innerText = isRegisterMode ? "כבר יש לך חשבון? התחברי כאן" : "אין לך חשבון עדיין? הירשמי כאן";
+        }
+
         function handleAuthSubmit(e) {
             e.preventDefault();
-            const usernameInput = document.getElementById('authUsername');
-            const passwordInput = document.getElementById('authPassword');
-            
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
 
             if (!username || !password) return;
 
-            // Admin check
+            // Admin Login
             if (username.toLowerCase() === 'admin') {
                 if (password === 'Aa123456') {
-                    currentUser = 'Admin';
-                    isAdmin = true;
-                    saveAndEnter();
+                    loginSuccess('Admin', true);
                 } else {
                     alert('סיסמת אדמין שגויה!');
                 }
                 return;
             }
 
-            // Regular User Local DB check via localStorage
             let usersDb = JSON.parse(localStorage.getItem('yapping_users_db') || '{}');
 
             if (isRegisterMode) {
                 if (usersDb[username]) {
-                    alert('שם המשתמש כבר תפוס, בחרי שם אחר או התחברי.');
+                    alert('שם המשתמש כבר תפוס, בחרי שם אחר.');
                     return;
                 }
-                // Register new user
                 usersDb[username] = password;
                 localStorage.setItem('yapping_users_db', JSON.stringify(usersDb));
-                currentUser = username;
-                isAdmin = false;
-                saveAndEnter();
+                loginSuccess(username, false);
             } else {
-                // Login check
                 if (usersDb[username] && usersDb[username] === password) {
-                    currentUser = username;
-                    isAdmin = false;
-                    saveAndEnter();
+                    loginSuccess(username, false);
                 } else {
-                    alert('שם משתמש או סיסמה שגויים, או שטרם נרשמת. לחצי על הירשמי כאן למטה.');
+                    alert('שם משתמש או סיסמה שגויים, או שטרם נרשמת.');
                 }
             }
         }
 
-        function saveAndEnter() {
-            localStorage.setItem('yapping_user', currentUser);
-            localStorage.setItem('yapping_is_admin', isAdmin);
-            showApp();
+        function loginSuccess(username, adminStatus) {
+            localStorage.setItem('yapping_user', username);
+            localStorage.setItem('yapping_is_admin', adminStatus);
+            showApp(username, adminStatus);
         }
 
         function logout() {
@@ -325,45 +298,33 @@
             location.reload();
         }
 
-        function showApp() {
-            const authScreen = document.getElementById('authScreen');
-            const appContent = document.getElementById('appContent');
-            const bottomNav = document.getElementById('bottomNav');
-            const userBadge = document.getElementById('userBadge');
+        function showApp(username, adminStatus) {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('appContent').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.remove('hidden');
             
-            if (authScreen) authScreen.classList.add('hidden');
-            if (appContent) appContent.classList.remove('hidden');
-            if (bottomNav) bottomNav.classList.remove('hidden');
-            if (userBadge) {
-                userBadge.classList.remove('hidden');
-                userBadge.classList.add('flex');
-            }
-            
-            const userNameDisplay = document.getElementById('userNameDisplay');
-            if (userNameDisplay) userNameDisplay.innerText = currentUser;
+            const badge = document.getElementById('userBadge');
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+            document.getElementById('userNameDisplay').innerText = username;
 
-            if (isAdmin) {
-                const adminPanel = document.getElementById('adminPanel');
-                const adminDel = document.getElementById('adminDeleteQuestionBtn');
-                if (adminPanel) adminPanel.classList.remove('hidden');
-                if (adminDel) adminDel.classList.remove('hidden');
+            if (adminStatus) {
+                document.getElementById('adminPanel').classList.remove('hidden');
+                document.getElementById('adminDeleteQuestionBtn').classList.remove('hidden');
             }
         }
 
-        // Tab Switching
         function switchTab(tab) {
             ['yapp', 'wall', 'history'].forEach(t => {
-                const tabEl = document.getElementById(`tab-${t}`);
-                if (tabEl) tabEl.classList.add('hidden');
-                const navBtn = document.getElementById(`nav-${t}`);
-                if (navBtn) {
-                    navBtn.classList.remove('text-purple-600');
-                    navBtn.classList.add('text-gray-400');
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`nav-${t}`);
+                if (btn) {
+                    btn.classList.remove('text-purple-600');
+                    btn.classList.add('text-gray-400');
                 }
             });
 
-            const activeTab = document.getElementById(`tab-${tab}`);
-            if (activeTab) activeTab.classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
             const activeBtn = document.getElementById(`nav-${tab}`);
             if (activeBtn) {
                 activeBtn.classList.remove('text-gray-400');
@@ -373,16 +334,14 @@
             if (tab === 'history') loadHistory();
         }
 
-        // Character Counter
-        const userAnswerTextElem = document.getElementById('userAnswerText');
-        if (userAnswerTextElem) {
-            userAnswerTextElem.addEventListener('input', (e) => {
-                const countElem = document.getElementById('charCount');
-                if (countElem) countElem.innerText = `${e.target.value.length} / 300`;
+        // Character counter
+        const answerInput = document.getElementById('userAnswerText');
+        if (answerInput) {
+            answerInput.addEventListener('input', (e) => {
+                document.getElementById('charCount').innerText = `${e.target.value.length} / 300`;
             });
         }
 
-        // Firebase Listeners
         function setupListeners() {
             db.collection('questions').orderBy('createdAt', 'desc').limit(1).onSnapshot(snapshot => {
                 if (!snapshot.empty) {
@@ -402,35 +361,25 @@
             }, () => renderDailyFeedDemo());
         }
 
-        // Timer
         function startTimer(endTime) {
             if (timerInterval) clearInterval(timerInterval);
 
             function update() {
-                const now = new Date().getTime();
-                const distance = endTime - now;
-
+                const distance = endTime - Date.now();
                 if (distance < 0) {
                     clearInterval(timerInterval);
-                    const timerText = document.getElementById('timerText');
-                    if (timerText) timerText.innerText = "תשובות נחשפו!";
+                    document.getElementById('timerText').innerText = "תשובות נחשפו!";
                     const statusBox = document.getElementById('questionStatusBox');
                     if (statusBox) statusBox.classList.add('hidden');
                     renderAnswers();
                     return false;
                 }
-
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                const timerTextElem = document.getElementById('timerText');
-                if (timerTextElem) {
-                    timerTextElem.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                }
+                const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((distance % (1000 * 60)) / 1000);
+                document.getElementById('timerText').innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
                 return true;
             }
-
             if (update()) timerInterval = setInterval(update, 1000);
         }
 
@@ -448,103 +397,69 @@
 
         function renderQuestion() {
             if (!currentQuestion) return;
-            const qTitle = document.getElementById('questionTitle');
-            if (qTitle) qTitle.innerText = currentQuestion.title;
-            const isExpired = Date.now() >= currentQuestion.expiresAt;
-            
-            if (isExpired) {
-                const timerText = document.getElementById('timerText');
-                if (timerText) timerText.innerText = "תשובות גלויות";
-                const statusBox = document.getElementById('questionStatusBox');
-                if (statusBox) statusBox.classList.add('hidden');
+            document.getElementById('questionTitle').innerText = currentQuestion.title;
+            if (Date.now() >= currentQuestion.expiresAt) {
+                document.getElementById('timerText').innerText = "תשובות גלויות";
+                document.getElementById('questionStatusBox').classList.add('hidden');
             } else {
                 startTimer(currentQuestion.expiresAt);
             }
-
             checkUserAnsweredState();
         }
 
         function checkUserAnsweredState() {
             if (!currentQuestion) return;
+            const currentUser = localStorage.getItem('yapping_user');
             const hasAnsweredLocal = localStorage.getItem(`answered_${currentQuestion.id}`) === 'true';
             const hasAnsweredInList = activeAnswers.some(a => a.author === currentUser);
 
-            const formContainer = document.getElementById('answerFormContainer');
-            const notice = document.getElementById('alreadyAnsweredNotice');
-            if (!formContainer || !notice) return;
-
             if (hasAnsweredLocal || hasAnsweredInList) {
-                formContainer.classList.add('hidden');
-                notice.classList.remove('hidden');
+                document.getElementById('answerFormContainer').classList.add('hidden');
+                document.getElementById('alreadyAnsweredNotice').classList.remove('hidden');
             } else {
-                formContainer.classList.remove('hidden');
-                notice.classList.add('hidden');
+                document.getElementById('answerFormContainer').classList.remove('hidden');
+                document.getElementById('alreadyAnsweredNotice').classList.add('hidden');
             }
         }
 
         function publishQuestion() {
-            const textElem = document.getElementById('newQuestionText');
-            if (!textElem) return;
-            const text = textElem.value.trim();
+            const text = document.getElementById('newQuestionText').value.trim();
             if (!text) return;
-
             const now = Date.now();
-            const questionData = {
-                title: text,
-                createdAt: now,
-                expiresAt: now + (24 * 60 * 60 * 1000)
-            };
-
-            db.collection('questions').add(questionData).then(() => {
-                textElem.value = '';
-            }).catch(() => {
-                currentQuestion = { id: 'local_' + now, ...questionData };
-                renderQuestion();
+            db.collection('questions').add({ title: text, createdAt: now, expiresAt: now + (24 * 60 * 60 * 1000) }).then(() => {
+                document.getElementById('newQuestionText').value = '';
             });
         }
 
         function deleteCurrentQuestion() {
+            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!isAdmin || !currentQuestion) return;
-            if (confirm("האם למחוק את השאלה הנוכחית ואת כל התשובות שלה?")) {
-                db.collection('questions').doc(currentQuestion.id).delete().then(() => {
-                    alert("השאלה נמחקה בהצלחה");
-                }).catch(() => {
-                    currentQuestion = null;
-                    const qTitle = document.getElementById('questionTitle');
-                    if (qTitle) qTitle.innerText = "אין שאלה פעילה כרגע";
-                });
+            if (confirm("למחוק את השאלה הנוכחית?")) {
+                db.collection('questions').doc(currentQuestion.id).delete();
             }
         }
 
         let activeAnswers = [];
 
         function submitAnswer() {
-            const answerTextElem = document.getElementById('userAnswerText');
-            if (!answerTextElem || !currentQuestion) return;
-            const answerText = answerTextElem.value.trim();
-            if (!answerText) return;
+            const text = document.getElementById('userAnswerText').value.trim();
+            const currentUser = localStorage.getItem('yapping_user');
+            if (!text || !currentQuestion) return;
 
             if (activeAnswers.some(a => a.author === currentUser)) {
-                alert("כבר ענית על השאלה הזו! ניתן לענות רק פעם אחת.");
+                alert("כבר ענית על השאלה הזו!");
                 return;
             }
 
-            const answerObj = {
+            db.collection('answers').add({
                 questionId: currentQuestion.id,
                 author: currentUser,
-                text: answerText,
+                text: text,
                 createdAt: Date.now(),
                 comments: []
-            };
-
-            db.collection('answers').add(answerObj).then(() => {
+            }).then(() => {
                 localStorage.setItem(`answered_${currentQuestion.id}`, 'true');
-                answerTextElem.value = '';
-                checkUserAnsweredState();
-            }).catch(() => {
-                activeAnswers.push(answerObj);
-                localStorage.setItem(`answered_${currentQuestion.id}`, 'true');
-                renderAnswers();
+                document.getElementById('userAnswerText').value = '';
                 checkUserAnsweredState();
             });
         }
@@ -560,8 +475,7 @@
 
         function loadAnswersDemo() {
             activeAnswers = [
-                { id: '1', author: 'מאיה', text: 'שכחתי שחברתי את המחשב לרמקול בסלון ופתחתי סרטון בטיקטוק במקס ווליום 💀', createdAt: Date.now() - 3600000, comments: [] },
-                { id: '2', author: 'נועה', text: 'אמרתי לשליח של הפיצה "אוהבת אותך" במקום "תודה רבה". מתי לעבור דירה?', createdAt: Date.now() - 7200000, comments: [{author: 'עדי', text: 'חחחחח מתה'}] }
+                { id: '1', author: 'מאיה', text: 'שכחתי שחברתי את המחשב לרמקול בסלון ופתחתי סרטון בטיקטוק במקס ווליום 💀', createdAt: Date.now() - 3600000, comments: [] }
             ];
             renderAnswers();
             checkUserAnsweredState();
@@ -569,16 +483,16 @@
 
         function renderAnswers() {
             const container = document.getElementById('answersList');
-            const countElem = document.getElementById('answersCount');
-            if (!container) return;
-            if (countElem) countElem.innerText = activeAnswers.length;
+            const currentUser = localStorage.getItem('yapping_user');
+            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
+            document.getElementById('answersCount').innerText = activeAnswers.length;
             container.innerHTML = '';
 
             const isLocked = currentQuestion && Date.now() < currentQuestion.expiresAt;
 
             activeAnswers.forEach(ans => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm relative space-y-2";
+                card.className = "bg-white p-4 rounded-2xl border border-purple-100 shadow-sm space-y-2";
 
                 if (isLocked) {
                     card.innerHTML = `
@@ -586,25 +500,18 @@
                             <span class="font-bold text-purple-600">משתמשת ענתה 🔒</span>
                             <span>${new Date(ans.createdAt).toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
-                        <div class="blur-content select-none text-sm text-gray-800">
-                            התשובה הזו נסתרת כרגע ותיחשף רק בתום 24 השעות לכולן!
-                        </div>
-                        ${isAdmin ? `<button onclick="deleteAnswer('\${ans.id}')" title="מחיקת תשובה" class="text-xs text-red-500 hover:text-red-700 font-bold mt-1"><i class="fa-solid fa-trash"></i> מחיקה (אדמין)</button>` : ''}
+                        <div class="blur-content select-none text-sm text-gray-800">התשובה נסתרת ותיחשף בעוד 24 שעות!</div>
+                        ${isAdmin ? `<button onclick="deleteAnswer('\${ans.id}')" class="text-xs text-red-500 font-bold mt-1"><i class="fa-solid fa-trash"></i> מחיקה</button>` : ''}
                     `;
                 } else {
                     card.innerHTML = `
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-xs text-purple-700">${ans.author}</span>
-                            ${isAdmin ? `<button onclick="deleteAnswer('\${ans.id}')" title="מחיקת תשובה" class="text-xs text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            ${isAdmin ? `<button onclick="deleteAnswer('\${ans.id}')" class="text-xs text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </div>
                         <p class="text-sm text-gray-800 leading-snug">${ans.text}</p>
-                        
                         <div class="pt-2 border-t border-purple-50 space-y-1">
-                            ${(ans.comments || []).map(c => `
-                                <div class="text-xs bg-purple-50 p-1.5 rounded-lg flex justify-between">
-                                    <span><span class="font-semibold text-purple-800">${c.author}:</span>${c.text}</span>
-                                </div>
-                            `).join('')}
+                            ${(ans.comments || []).map(c => `<div class="text-xs bg-purple-50 p-1.5 rounded-lg"><span class="font-semibold text-purple-800">${c.author}:</span>${c.text}</div>`).join('')}
                             <div class="flex gap-1 mt-2">
                                 <input type="text" id="comment-input-${ans.id}" placeholder="תגובה (עד 100 תווים)" maxlength="100" class="flex-1 text-xs border border-purple-200 rounded-lg p-1.5 focus:outline-none">
                                 <button onclick="addComment('${ans.id}')" class="bg-purple-600 text-white text-xs px-3 rounded-lg font-bold">שלח</button>
@@ -618,68 +525,48 @@
 
         function addComment(ansId) {
             const input = document.getElementById(`comment-input-${ansId}`);
-            if (!input) return;
-            const text = input.value.trim();
+            const text = input ? input.value.trim() : '';
+            const currentUser = localStorage.getItem('yapping_user');
             if (!text) return;
 
-            const commentObj = { author: currentUser, text: text };
             db.collection('answers').doc(ansId).update({
-                comments: firebase.firestore.FieldValue.arrayUnion(commentObj)
-            }).catch(() => {
-                const ans = activeAnswers.find(a => a.id === ansId);
-                if (ans) {
-                    ans.comments = ans.comments || [];
-                    ans.comments.push(commentObj);
-                    renderAnswers();
-                }
+                comments: firebase.firestore.FieldValue.arrayUnion({ author: currentUser, text: text })
             });
         }
 
         function deleteAnswer(ansId) {
+            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!isAdmin) return;
-            if (confirm("האם למחוק תשובה זו?")) {
-                db.collection('answers').doc(ansId).delete().then(() => {
-                    renderAnswers();
-                }).catch(() => {
-                    activeAnswers = activeAnswers.filter(a => a.id !== ansId);
-                    renderAnswers();
-                });
+            if (confirm("למחוק תשובה זו?")) {
+                db.collection('answers').doc(ansId).delete();
             }
         }
 
         let dailyFeedItems = [];
 
         function submitDailyMessage() {
-            const textElem = document.getElementById('dailyText');
-            if (!textElem) return;
-            const text = textElem.value.trim();
+            const text = document.getElementById('dailyText').value.trim();
+            const currentUser = localStorage.getItem('yapping_user');
             if (!text) return;
 
-            const msgObj = {
+            db.collection('dailyFeed').add({
                 author: currentUser,
                 text: text,
                 createdAt: Date.now(),
                 reactions: {}
-            };
-
-            db.collection('dailyFeed').add(msgObj).then(() => {
-                textElem.value = '';
-            }).catch(() => {
-                dailyFeedItems.unshift(msgObj);
-                renderDailyFeed(dailyFeedItems);
-                textElem.value = '';
+            }).then(() => {
+                document.getElementById('dailyText').value = '';
             });
         }
 
         function renderDailyFeedDemo() {
-            dailyFeedItems = [
-                { id: 'd1', author: 'גל', text: 'בוקר טוב אהובות! מי באה לקפה בצהריים?', createdAt: Date.now() - 1800000, reactions: {'❤️': 3, '☕': 2} }
-            ];
+            dailyFeedItems = [{ id: 'd1', author: 'גל', text: 'בוקר טוב אהובות!', createdAt: Date.now() - 1800000, reactions: {'❤️': 3} }];
             renderDailyFeed(dailyFeedItems);
         }
 
         function renderDailyFeed(items) {
             const container = document.getElementById('dailyFeed');
+            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!container) return;
             container.innerHTML = '';
 
@@ -691,14 +578,12 @@
                         <span class="font-bold text-pink-600">${item.author}</span>
                         <div class="flex items-center gap-2">
                             <span class="text-gray-400">${new Date(item.createdAt).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})}</span>
-                            ${isAdmin ? `<button onclick="deleteDailyMessage('\${item.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            ${isAdmin ? `<button onclick="deleteDailyMessage('\${item.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </div>
                     </div>
                     <p class="text-sm text-gray-800">${item.text}</p>
                     <div class="flex gap-2 pt-1">
                         <button onclick="reactDaily('${item.id}', '❤️')" class="text-xs bg-pink-50 border border-pink-100 px-2 py-1 rounded-full">❤️ ${item.reactions?.['❤️'] || 0}</button>
-                        <button onclick="reactDaily('${item.id}', '😂')" class="text-xs bg-yellow-50 border border-yellow-100 px-2 py-1 rounded-full">😂 ${item.reactions?.['😂'] || 0}</button>
-                        <button onclick="reactDaily('${item.id}', '🔥')" class="text-xs bg-orange-50 border border-orange-100 px-2 py-1 rounded-full">🔥 ${item.reactions?.['🔥'] || 0}</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -706,13 +591,9 @@
         }
 
         function deleteDailyMessage(id) {
+            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!isAdmin) return;
-            if (confirm("למחוק מסר יומי זה?")) {
-                db.collection('dailyFeed').doc(id).delete().catch(() => {
-                    dailyFeedItems = dailyFeedItems.filter(i => i.id !== id);
-                    renderDailyFeed(dailyFeedItems);
-                });
-            }
+            db.collection('dailyFeed').doc(id).delete();
         }
 
         function reactDaily(id, emoji) {
@@ -726,6 +607,7 @@
 
         function loadHistory() {
             const container = document.getElementById('historyList');
+            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!container) return;
             container.innerHTML = '';
             db.collection('questions').orderBy('createdAt', 'desc').get().then(snapshot => {
@@ -746,8 +628,9 @@
         }
 
         function deleteQuestionHistory(qId) {
+            const isAdmin = localStorage.getItem('yapping_is_admin') === 'true';
             if (!isAdmin) return;
-            if (confirm("למחוק שאלה זו מההיסטוריה?")) {
+            if (confirm("למחוק שאלה זו?")) {
                 db.collection('questions').doc(qId).delete().then(() => loadHistory());
             }
         }
